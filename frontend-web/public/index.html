@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Writing Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="dot">✍</span> Writing Studio</div>
+  </header>
+
+  <!-- HOME VIEW -->
+  <main class="page" id="home-view">
+    <section class="hero">
+      <h1>What would you like to write about?</h1>
+      <p class="sub">Research-backed, cited blog posts — drafted and reviewed for you.</p>
+
+      <div class="composer">
+        <input id="topic" class="topic-input" type="text"
+               placeholder="e.g. The health benefits of green tea" />
+        <div class="composer-row">
+          <div class="segmented" id="mode">
+            <button class="seg active" data-mode="fast">Fast</button>
+            <button class="seg" data-mode="deep">Deep research</button>
+          </div>
+          <button id="generate" class="btn-primary">Generate</button>
+        </div>
+      </div>
+
+      <div class="progress hidden" id="progress"></div>
+    </section>
+
+    <h2 class="section-title">Recent drafts</h2>
+    <div class="drafts" id="drafts">
+      <p class="empty">Your generated blogs will appear here.</p>
+    </div>
+  </main>
+
+  <!-- ARTICLE VIEW -->
+  <main class="page article-view hidden" id="article-view">
+    <button class="back" id="back">← Back to studio</button>
+    <h1 class="article-title" id="article-title"></h1>
+    <article class="article" id="article-body"></article>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "blog-gen-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Web UI for the AI blog generator (talks to the FastAPI backend).",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

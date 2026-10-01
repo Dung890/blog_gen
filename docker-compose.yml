@@ -1,0 +1,8 @@
+services:
+  api:
+    build: .                 # build the image from the Dockerfile in this folder
+    ports:
+      - "8000:8000"          # map your machine's port 8000 -> container's 8000
+    env_file:
+      - .env                 # pass your GROQ_API_KEY etc. into the container at runtime
+    restart: unless-stopped  # auto-restart the container if it crashes
