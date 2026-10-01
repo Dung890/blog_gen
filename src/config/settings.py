@@ -74,6 +74,16 @@ class Settings(BaseSettings):
         description="Seconds to wait for a single LLM call before giving up.",
     )
 
+    # --- Database (Postgres + pgvector) for long-term memory ---
+    database_url: str = Field(
+        default="postgresql://blog:blog@localhost:5432/blog",
+        description="Postgres connection string (matches docker-compose 'db' service).",
+    )
+    embed_model: str = Field(
+        default="BAAI/bge-small-en-v1.5",
+        description="Local embedding model (fastembed) for semantic memory.",
+    )
+
     # --- Optional: LangSmith tracing/observability ---
     langchain_api_key: str | None = Field(
         default=None,

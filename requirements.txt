@@ -14,3 +14,6 @@ mypy>=1.11
 ddgs>=6.0
 mcp>=1.30
 langchain-mcp-adapters>=0.1
+fastembed>=0.3
+psycopg[binary]>=3.2
+pgvector>=0.3

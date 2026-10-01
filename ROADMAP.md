@@ -302,7 +302,8 @@ the phase needs them (don't over-engineer an empty app).
 - [x] Typed response model (`BlogResponse`) + structured JSON errors with request_id. *(Lesson 4)*
 - [x] Dockerfile + `.dockerignore` + compose — builds & runs; verified live in a container. *(Lesson 5)*
 - [x] `ruff` + `mypy` clean (13 files); config in `pyproject.toml`. *(Lesson 6)*
-- [ ] GitHub Actions CI — deferred until the project is pushed to GitHub (not a git repo yet).
+- [x] GitHub Actions CI — repo at github.com/Dung890/blog_gen; `.github/workflows/ci.yml`
+      runs ruff + mypy + pytest on every push/PR. First run green. *(done)*
 - **Deliverable:** resilient, observable, tested, containerized service. ✅
 - [ ] LangGraph checkpointer (SQLite → Postgres) for resumable, inspectable runs.
 - **Stack in play:** FastAPI + Postgres + SQLite checkpointer + Docker.
@@ -340,7 +341,9 @@ the phase needs them (don't over-engineer an empty app).
   - First run favored single-pass (8 vs 7) — honest finding: single-pass is already grounded+reflected,
     and deep was handicapped by ddgs rate-limiting (thin evidence). Deep shines on complex topics + a real
     search API; use the harness to tune. The point: measured, not assumed.
-- [ ] Research memory (semantic/episodic) via pgvector. *(later)*
+- [x] Semantic memory store foundation: `src/memory/store.py` (Neon Postgres + pgvector +
+      local fastembed embeddings); `remember()` / `recall()` verified live. *(wiring into the
+      graph — recall before writing, store after — is the next step.)*
 - [ ] Optional: expose the pipeline **as an MCP server**. *(later)*
 - [ ] Keep a fast single-pass mode alongside deep mode.
 - **Stack added:** Celery worker + pgvector (async + memory).

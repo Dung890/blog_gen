@@ -6,3 +6,21 @@ services:
     env_file:
       - .env                 # pass your GROQ_API_KEY etc. into the container at runtime
     restart: unless-stopped  # auto-restart the container if it crashes
+    depends_on:
+      - db
+
+  db:
+    # Postgres with the pgvector extension pre-installed (for semantic memory).
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: blog
+      POSTGRES_PASSWORD: blog
+      POSTGRES_DB: blog
+    ports:
+      - "5432:5432"          # expose Postgres to the host for local dev
+    volumes:
+      - pgdata:/var/lib/postgresql/data  # persist data across restarts
+    restart: unless-stopped
+
+volumes:
+  pgdata:
