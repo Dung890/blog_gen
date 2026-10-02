@@ -5,6 +5,9 @@ const $ = (id) => document.getElementById(id);
 const els = {
   topic: $("topic"),
   generate: $("generate"),
+  tone: $("tone"),
+  length: $("length"),
+  audience: $("audience"),
   progress: $("progress"),
   drafts: $("drafts"),
   homeView: $("home-view"),
@@ -88,11 +91,18 @@ async function generate() {
   els.progress.innerHTML = '<div class="row">Starting…</div>';
   let blog = {};
 
+  const payload = {
+    topic,
+    tone: els.tone.value,
+    length: els.length.value,
+    audience: els.audience.value,
+  };
+
   try {
     const resp = await fetch(API + endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topic }),
+      body: JSON.stringify(payload),
     });
     if (!resp.ok) throw new Error("HTTP " + resp.status);
 

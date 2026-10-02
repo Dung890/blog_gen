@@ -26,6 +26,26 @@
       <div class="composer">
         <input id="topic" class="topic-input" type="text"
                placeholder="e.g. The health benefits of green tea" />
+        <div class="controls">
+          <select id="tone" aria-label="Tone">
+            <option value="professional">Professional</option>
+            <option value="casual">Casual</option>
+            <option value="friendly">Friendly</option>
+            <option value="technical">Technical</option>
+            <option value="persuasive">Persuasive</option>
+          </select>
+          <select id="length" aria-label="Length">
+            <option value="short">Short</option>
+            <option value="medium" selected>Medium</option>
+            <option value="long">Long</option>
+          </select>
+          <select id="audience" aria-label="Audience">
+            <option value="a general audience">General audience</option>
+            <option value="beginners">Beginners</option>
+            <option value="experts">Experts</option>
+            <option value="developers">Developers</option>
+          </select>
+        </div>
         <div class="composer-row">
           <div class="segmented" id="mode">
             <button class="seg active" data-mode="fast">Fast</button>

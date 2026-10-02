@@ -72,6 +72,12 @@ def with_retry(func):
 MAX_REVISIONS = 2
 log = get_logger("blog_node")
 
+_LENGTH_WORDS = {
+    "short": "about 500 words",
+    "medium": "about 900 words",
+    "long": "about 1400 words",
+}
+
 class BlogNode:
     """A collection of blog-building steps sharing one LLM."""
 
@@ -135,6 +141,9 @@ class BlogNode:
         """Write the Markdown body, grounded in the research with citations."""
         research = state.get("research", "") or "(no research available)"
         memory_notes = (state.get("memory_notes") or "").strip()
+        tone = state.get("tone") or "professional"
+        audience = state.get("audience") or "a general audience"
+        length = _LENGTH_WORDS.get(state.get("length") or "medium", "about 900 words")
         memory_block = (
             f"\n\nRELATED PAST ARTICLES you've written (for continuity; don't repeat them):\n"
             f"{memory_notes}"
@@ -144,6 +153,8 @@ class BlogNode:
         prompt = (
             "You are an expert blog writer. Use Markdown formatting. Write "
             f"detailed, well-structured content for the topic: {state['topic']}.\n\n"
+            f"Write in a {tone} tone and target {audience}. "
+            f"The content should be approximately {length}.\n\n"
             "Ground your writing in the SEARCH RESULTS below. Cite sources inline "
             "with their URLs where relevant, and finish with a '## Sources' section "
             "listing the URLs you used.\n\n"

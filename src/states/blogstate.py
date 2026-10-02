@@ -45,3 +45,6 @@ class BlogState(TypedDict):
     iterations: int  # how many revise cycles we've done (loop guard)
     research: str            # <- raw web-search results to ground the content
     memory_notes: str        # related past articles recalled from long-term memory
+    tone: str | None
+    length: str | None
+    audience: str | None

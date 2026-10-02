@@ -129,3 +129,15 @@ body {
   .hero h1 { font-size: 30px; }
   .drafts { grid-template-columns: 1fr; }
 }
+.controls { display: flex; gap: 10px; flex-wrap: wrap; margin: 4px 0 14px; }
+.controls select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 12px;
+  color: var(--ink);
+  font-family: var(--ui);
+  font-size: 13px;
+  cursor: pointer;
+}
+.controls select:focus { outline: none; border-color: var(--accent); }

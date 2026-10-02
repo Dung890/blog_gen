@@ -359,7 +359,9 @@ the phase needs them (don't over-engineer an empty app).
       editorial home screen, home↔article view routing, article canvas, recent drafts via
       localStorage, clean titles. Verified live. *(Phase 3 L2)*
 - [ ] Section editor + export to HTML/`.docx` (Markdown + copy/download done).
-- [ ] Dynamic tone/length/audience controls + section regeneration.
+- [x] Tone / length / audience controls: `BlogRequest` fields → `_controls` → graph state →
+      content prompt; styled dropdowns in the Writing Studio composer. Verified. *(section
+      regeneration: later)*
 - [ ] SEO pack (meta description, slug, tags, reading time, cover-image prompt).
 - [ ] Run history; optional human-in-the-loop approval after outline (`interrupt()`).
 - [ ] Auth + rate limiting + API keys if multi-tenant.

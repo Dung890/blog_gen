@@ -59,6 +59,13 @@ class BlogRequest(BaseModel):
         description="Optional target language to translate into.",
         examples=["spanish"],
     )
+    tone: str | None = Field(default=None, description="Writing tone.", examples=["professional"])
+    length: str | None = Field(
+        default=None, description="short | medium | long.", examples=["medium"]
+    )
+    audience: str | None = Field(
+        default=None, description="Target audience.", examples=["beginners"]
+    )
 
 
 class BlogResponse(BaseModel):
@@ -94,11 +101,19 @@ def _sse(data: dict) -> str:
     """Format a dict as one Server-Sent Event line."""
     return f"data: {json.dumps(data)}\n\n"
 
+def _controls(payload: BlogRequest) -> dict:
+    return {
+        "tone": payload.tone or "professional",
+        "length": payload.length or "medium",
+        "audience": payload.audience or "a general audience",
+    }
+
 @app.post("/blogs", response_model=BlogResponse)
 async def create_blogs(payload: BlogRequest):
     """Generate a blog post from a topic, optionally translated to a language."""
     topic = payload.topic.strip()
     language = (payload.language or "").strip()
+    controls = _controls(payload)
 
     if not topic:
         raise HTTPException(status_code=400, detail="Field 'topic' is required.")
@@ -117,10 +132,12 @@ async def create_blogs(payload: BlogRequest):
 
         if language:
             graph = graph_builder.setup_graph(usecase="language")
-            state = await graph.ainvoke({"topic": topic, "current_language": language.lower()})
+            state = await graph.ainvoke(
+                {"topic": topic, "current_language": language.lower(), **controls}
+            )
         else:
             graph = graph_builder.setup_graph(usecase="topic")
-            state = await graph.ainvoke({"topic": topic})
+            state = await graph.ainvoke({"topic": topic, **controls})
 
         blog = state["blog"]
         duration = time.perf_counter() - start
@@ -156,15 +173,16 @@ async def stream_blogs(payload: BlogRequest):
     if not topic:
         raise HTTPException(status_code=400, detail="Field 'topic' is required.")
 
+    controls = _controls(payload)
     graph_builder = GraphBuilder(
         GroqLLM().get_llm("fast"), GroqLLM().get_llm("strong"), get_memory()
     )
     if language:
         graph = graph_builder.setup_graph(usecase="language")
-        graph_input = {"topic": topic, "current_language": language.lower()}
+        graph_input = {"topic": topic, "current_language": language.lower(), **controls}
     else:
         graph = graph_builder.setup_graph(usecase="topic")
-        graph_input = {"topic": topic}
+        graph_input = {"topic": topic, **controls}
 
     async def event_stream():
         request_id = uuid.uuid4().hex[:8]
