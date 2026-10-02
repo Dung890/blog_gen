@@ -20,11 +20,12 @@ class MemoryStore:
 
     def __init__(self):
         settings = get_settings()
-        self._embedder = TextEmbedding(model_name=settings.embed_model)
         self._conn = psycopg.connect(settings.database_url, autocommit=True)
         self._conn.execute("CREATE EXTENSION IF NOT EXISTS vector")  # must exist before register
         register_vector(self._conn)  # teach psycopg how to send/receive vectors
         self._ensure_schema()
+        # Only load the embedding model once the DB is confirmed working.
+        self._embedder = TextEmbedding(model_name=settings.embed_model)
 
     def _embed(self, text: str):
         """Turn text into a 384-dim vector (NumPy array, which register_vector

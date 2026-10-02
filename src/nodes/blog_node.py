@@ -70,14 +70,39 @@ def with_retry(func):
 
 # Safety cap: never revise more than this many times, no matter what.
 MAX_REVISIONS = 2
-
+log = get_logger("blog_node")
 
 class BlogNode:
     """A collection of blog-building steps sharing one LLM."""
 
-    def __init__(self, llm, llm_strong=None):
+    def __init__(self, llm, llm_strong=None, memory=None):
         self.llm = llm
         self.llm_strong = llm_strong or llm  # fall back to the same model if not given
+        self.memory = memory  # a MemoryStore, or None if memory is unavailable
+
+    def recall_memory(self, state: BlogState) -> dict:
+        """Pull related past articles from long-term memory (safe if memory is off)."""
+        if not self.memory:
+            return {"memory_notes": ""}
+        try:
+            hits = self.memory.recall(state["topic"], k=3)
+            notes = "\n".join(f"- {h['text']}" for h in hits)
+        except Exception as exc:  # noqa: BLE001 - memory must never break generation
+            log.warning("recall_failed", error=str(exc)[:120])
+            notes = ""
+        return {"memory_notes": notes}
+
+    def store_memory(self, state: BlogState) -> dict:
+        """Save this finished post to long-term memory (safe if memory is off)."""
+        if self.memory:
+            blog = state.get("blog", {})
+            title = (blog.get("title") or "").strip()
+            if title:
+                try:
+                    self.memory.remember(title, kind="episodic", metadata={"topic": state["topic"]})
+                except Exception as exc:  # noqa: BLE001
+                    log.warning("store_failed", error=str(exc)[:120])
+        return {}
 
     @with_retry
     def _invoke(self, prompt):
@@ -109,13 +134,20 @@ class BlogNode:
     def content_generation(self, state: BlogState) -> dict:
         """Write the Markdown body, grounded in the research with citations."""
         research = state.get("research", "") or "(no research available)"
+        memory_notes = (state.get("memory_notes") or "").strip()
+        memory_block = (
+            f"\n\nRELATED PAST ARTICLES you've written (for continuity; don't repeat them):\n"
+            f"{memory_notes}"
+            if memory_notes
+            else ""
+        )
         prompt = (
             "You are an expert blog writer. Use Markdown formatting. Write "
             f"detailed, well-structured content for the topic: {state['topic']}.\n\n"
             "Ground your writing in the SEARCH RESULTS below. Cite sources inline "
             "with their URLs where relevant, and finish with a '## Sources' section "
             "listing the URLs you used.\n\n"
-            f"SEARCH RESULTS:\n{research}"
+            f"SEARCH RESULTS:\n{research}{memory_block}"
         )
         response = self._invoke_strong(prompt)
         return {"blog": {"content": response.content}}

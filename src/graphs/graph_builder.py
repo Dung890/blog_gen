@@ -18,34 +18,38 @@ from src.states.blogstate import BlogState
 
 
 class GraphBuilder:
-    def __init__(self, llm, llm_strong=None):
+    def __init__(self, llm, llm_strong=None, memory=None):
         self.llm = llm
         self.llm_strong = llm_strong or llm
         self.graph = StateGraph(BlogState)
-        self.blog_node_obj = BlogNode(self.llm, self.llm_strong)
+        self.blog_node_obj = BlogNode(self.llm, self.llm_strong, memory)
 
     def build_topic_graph(self):
         """Blog from a topic, with a self-critique/revise loop."""
         self.graph.add_node("title_creation", self.blog_node_obj.title_creation)
+        self.graph.add_node("recall_memory", self.blog_node_obj.recall_memory)
         self.graph.add_node("content_generation", self.blog_node_obj.content_generation)
         self.graph.add_node("critique_draft", self.blog_node_obj.critique)
         self.graph.add_node("revise", self.blog_node_obj.revise)
         self.graph.add_node("do_research", self.blog_node_obj.research)
+        self.graph.add_node("store_memory", self.blog_node_obj.store_memory)
 
         self.graph.add_edge(START, "title_creation")
-        self.graph.add_edge("title_creation", "do_research")
+        self.graph.add_edge("title_creation", "recall_memory")
+        self.graph.add_edge("recall_memory", "do_research")
         self.graph.add_edge("do_research", "content_generation")
         self.graph.add_edge("content_generation", "critique_draft")
 
         # Conditional edge: after critique, the router returns "revise" or "end".
-        # The mapping says which node each of those strings goes to.
+        # On "end" we go to store_memory (save the post) before finishing.
         self.graph.add_conditional_edges(
             "critique_draft",
             self.blog_node_obj.route_after_critique,
-            {"revise": "revise", "end": END},
+            {"revise": "revise", "end": "store_memory"},
         )
         # The loop: after revising, go back to critique to re-judge.
         self.graph.add_edge("revise", "critique_draft")
+        self.graph.add_edge("store_memory", END)
         return self.graph
 
     def build_language_graph(self):

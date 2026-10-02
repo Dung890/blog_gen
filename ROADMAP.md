@@ -341,9 +341,10 @@ the phase needs them (don't over-engineer an empty app).
   - First run favored single-pass (8 vs 7) — honest finding: single-pass is already grounded+reflected,
     and deep was handicapped by ddgs rate-limiting (thin evidence). Deep shines on complex topics + a real
     search API; use the harness to tune. The point: measured, not assumed.
-- [x] Semantic memory store foundation: `src/memory/store.py` (Neon Postgres + pgvector +
-      local fastembed embeddings); `remember()` / `recall()` verified live. *(wiring into the
-      graph — recall before writing, store after — is the next step.)*
+- [x] Semantic memory store: `src/memory/store.py` (Neon Postgres + pgvector + local fastembed).
+- [x] Memory wired into the fast graph: `recall_memory` before writing (injects related past
+      posts into the prompt) + `store_memory` after; `get_memory()` singleton degrades gracefully.
+      Verified live (related topic recalls the right prior post). *(deep pipeline wiring: later.)*
 - [ ] Optional: expose the pipeline **as an MCP server**. *(later)*
 - [ ] Keep a fast single-pass mode alongside deep mode.
 - **Stack added:** Celery worker + pgvector (async + memory).

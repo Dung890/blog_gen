@@ -21,6 +21,7 @@ from src.config.logging import configure_logging, get_logger
 from src.graphs.graph_builder import GraphBuilder
 from src.graphs.research_graph import DeepResearchGraphBuilder
 from src.llms.groqllm import GroqLLM
+from src.memory import get_memory
 
 # Load and validate configuration once at import time. If GROQ_API_KEY is
 # missing, the app fails here with a clear error instead of mid-request.
@@ -110,7 +111,9 @@ async def create_blogs(payload: BlogRequest):
     start = time.perf_counter()
 
     try:
-        graph_builder = GraphBuilder(GroqLLM().get_llm("fast"), GroqLLM().get_llm("strong"))
+        graph_builder = GraphBuilder(
+            GroqLLM().get_llm("fast"), GroqLLM().get_llm("strong"), get_memory()
+        )
 
         if language:
             graph = graph_builder.setup_graph(usecase="language")
@@ -153,7 +156,9 @@ async def stream_blogs(payload: BlogRequest):
     if not topic:
         raise HTTPException(status_code=400, detail="Field 'topic' is required.")
 
-    graph_builder = GraphBuilder(GroqLLM().get_llm("fast"), GroqLLM().get_llm("strong"))
+    graph_builder = GraphBuilder(
+        GroqLLM().get_llm("fast"), GroqLLM().get_llm("strong"), get_memory()
+    )
     if language:
         graph = graph_builder.setup_graph(usecase="language")
         graph_input = {"topic": topic, "current_language": language.lower()}
