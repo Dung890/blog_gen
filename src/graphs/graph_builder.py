@@ -32,6 +32,7 @@ class GraphBuilder:
         self.graph.add_node("critique_draft", self.blog_node_obj.critique)
         self.graph.add_node("revise", self.blog_node_obj.revise)
         self.graph.add_node("do_research", self.blog_node_obj.research)
+        self.graph.add_node("seo_pack", self.blog_node_obj.seo_pack)
         self.graph.add_node("store_memory", self.blog_node_obj.store_memory)
 
         self.graph.add_edge(START, "title_creation")
@@ -45,10 +46,11 @@ class GraphBuilder:
         self.graph.add_conditional_edges(
             "critique_draft",
             self.blog_node_obj.route_after_critique,
-            {"revise": "revise", "end": "store_memory"},
+            {"revise": "revise", "end": "seo_pack"},
         )
         # The loop: after revising, go back to critique to re-judge.
         self.graph.add_edge("revise", "critique_draft")
+        self.graph.add_edge("seo_pack", "store_memory")
         self.graph.add_edge("store_memory", END)
         return self.graph
 

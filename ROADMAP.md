@@ -362,7 +362,9 @@ the phase needs them (don't over-engineer an empty app).
 - [x] Tone / length / audience controls: `BlogRequest` fields → `_controls` → graph state →
       content prompt; styled dropdowns in the Writing Studio composer. Verified. *(section
       regeneration: later)*
-- [ ] SEO pack (meta description, slug, tags, reading time, cover-image prompt).
+- [x] SEO pack: `seo_pack` node (meta description, slug, tags via LLM; reading time computed
+      from word count) → exposed in API `done` event + `/blogs` response → rendered on the
+      article page (reading time + tag pills + meta description). Verified live. *(cover-image prompt: later)*
 - [ ] Run history; optional human-in-the-loop approval after outline (`interrupt()`).
 - [ ] Auth + rate limiting + API keys if multi-tenant.
 - **Deliverable:** a polished app fit for users or a recruiter.

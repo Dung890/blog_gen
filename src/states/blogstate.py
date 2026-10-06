@@ -36,6 +36,15 @@ def merge_blog(existing: dict | None, new: dict | None) -> dict:
     new = new or {}
     return {**existing, **new}
 
+class SeoPack(BaseModel):
+    """SEO metadata for a finished post."""
+
+    meta_description: str = Field(description="A 150-160 character SEO meta description.")
+    slug: str = Field(description="URL-friendly slug: lowercase words joined by hyphens.")
+    tags: list[str] = Field(description="3-6 relevant keyword tags.")
+    reading_time_min: int = Field(description="Estimated reading time in minutes.")
+
+
 
 class BlogState(TypedDict):
     topic: str
@@ -48,3 +57,5 @@ class BlogState(TypedDict):
     tone: str | None
     length: str | None
     audience: str | None
+    seo: SeoPack | None      # SEO metadata produced after writing
+

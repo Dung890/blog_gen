@@ -7,10 +7,11 @@ the field it actually changed.
 """
 
 import groq
+from pydantic import BaseModel, Field
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 from src.config.logging import get_logger
-from src.states.blogstate import BlogState, Critique
+from src.states.blogstate import BlogState, Critique, SeoPack
 from src.tools.search import search_web
 
 log = get_logger("blog_node")
@@ -78,6 +79,14 @@ _LENGTH_WORDS = {
     "long": "about 1400 words",
 }
 
+
+class _SeoFields(BaseModel):
+    """The SEO fields the LLM produces (reading time is computed separately)."""
+
+    meta_description: str = Field(description="A 150-160 character SEO meta description.")
+    slug: str = Field(description="URL-friendly slug: lowercase words joined by hyphens.")
+    tags: list[str] = Field(description="3-6 relevant keyword tags.")
+
 class BlogNode:
     """A collection of blog-building steps sharing one LLM."""
 
@@ -109,6 +118,34 @@ class BlogNode:
                 except Exception as exc:  # noqa: BLE001
                     log.warning("store_failed", error=str(exc)[:120])
         return {}
+
+    def seo_pack(self, state: BlogState) -> dict:
+        """Produce SEO metadata for the finished post (graceful on failure)."""
+        blog = state.get("blog", {})
+        content = blog.get("content", "")
+        title = blog.get("title", "")
+        reading_time = max(1, round(len(content.split()) / 200))
+
+        prompt = (
+            "You are an SEO specialist. For the blog below, write a 150-160 char meta "
+            "description, a URL slug (lowercase, hyphenated), and 3-6 keyword tags.\n\n"
+            f"TITLE: {title}\n\nCONTENT:\n{content[:2000]}"
+        )
+        try:
+            fields = self._invoke_structured(_SeoFields, prompt)
+            seo = SeoPack(
+                meta_description=fields.meta_description,
+                slug=fields.slug,
+                tags=fields.tags,
+                reading_time_min=reading_time,
+            )
+        except Exception as exc:  # noqa: BLE001 - SEO is a nice-to-have, never crash
+            log.warning("seo_failed", error=str(exc)[:120])
+            slug = "-".join(title.lower().split())[:60] or "untitled"
+            seo = SeoPack(
+                meta_description="", slug=slug, tags=[], reading_time_min=reading_time
+            )
+        return {"seo": seo}
 
     @with_retry
     def _invoke(self, prompt):

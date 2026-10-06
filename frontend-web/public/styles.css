@@ -141,3 +141,12 @@ body {
   cursor: pointer;
 }
 .controls select:focus { outline: none; border-color: var(--accent); }
+
+.article-meta { margin: -8px 0 24px; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+.read-time { font-family: var(--ui); font-size: 13px; color: var(--muted); font-weight: 600; }
+.tag {
+  font-family: var(--ui); font-size: 12px; background: var(--accent-soft);
+  color: var(--accent); padding: 3px 10px; border-radius: 999px;
+}
+.meta-desc { font-family: var(--ui); font-size: 14px; color: var(--muted); font-style: italic; margin: 0; }

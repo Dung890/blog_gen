@@ -22,6 +22,7 @@ from src.graphs.graph_builder import GraphBuilder
 from src.graphs.research_graph import DeepResearchGraphBuilder
 from src.llms.groqllm import GroqLLM
 from src.memory import get_memory
+from src.states.blogstate import SeoPack
 
 # Load and validate configuration once at import time. If GROQ_API_KEY is
 # missing, the app fails here with a clear error instead of mid-request.
@@ -75,6 +76,7 @@ class BlogResponse(BaseModel):
     language: str | None = Field(default=None, description="Target language, if translated.")
     title: str = Field(..., description="The generated (or translated) blog title.")
     content: str = Field(..., description="The generated (or translated) Markdown body.")
+    seo: SeoPack | None = Field(default=None, description="SEO metadata for the post.")
     request_id: str = Field(..., description="Trace id for this request (matches the logs).")
 
 
@@ -84,8 +86,11 @@ STEP_MESSAGES = {
     "title_creation": "Created the title",
     "do_research": "Researched the web",
     "content_generation": "Drafted the content",
+    "recall_memory": "Recalled related past posts",
     "critique_draft": "Reviewed the draft",
     "revise": "Revised the draft",
+    "seo_pack": "Generated SEO metadata",
+    "store_memory": "Saved to memory",
     "translation": "Translated the post",
     # deep-research graph
     "planner": "Planned research angles",
@@ -147,6 +152,7 @@ async def create_blogs(payload: BlogRequest):
             language=language or None,
             title=blog.get("title", ""),
             content=blog.get("content", ""),
+            seo=state.get("seo"),
             request_id=request_id,
         )
     except Exception as exc:
@@ -189,6 +195,7 @@ async def stream_blogs(payload: BlogRequest):
         structlog.contextvars.bind_contextvars(request_id=request_id)
         log.info("blog_stream_started", topic=topic, language=language or None)
         blog: dict = {}
+        seo = None
         try:
             yield _sse({"event": "start", "request_id": request_id})
             # astream yields {node_name: that_node's_update} as each node finishes.
@@ -197,9 +204,11 @@ async def stream_blogs(payload: BlogRequest):
                     # Accumulate the blog as title/content updates arrive.
                     if isinstance(node_update, dict) and isinstance(node_update.get("blog"), dict):
                         blog.update(node_update["blog"])
+                    if isinstance(node_update, dict) and node_update.get("seo") is not None:
+                        seo = node_update["seo"].model_dump()
                     yield _sse({"event": "step", "node": node,
                                 "message": STEP_MESSAGES.get(node, node)})
-            yield _sse({"event": "done", "request_id": request_id, "blog": blog})
+            yield _sse({"event": "done", "request_id": request_id, "blog": blog, "seo": seo})
             log.info("blog_stream_finished")
         except Exception as exc:
             log.error("blog_stream_failed", error=str(exc))

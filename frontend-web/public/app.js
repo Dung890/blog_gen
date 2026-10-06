@@ -14,6 +14,7 @@ const els = {
   articleView: $("article-view"),
   back: $("back"),
   articleTitle: $("article-title"),
+  articleMeta: $("article-meta"),
   articleBody: $("article-body"),
 };
 
@@ -36,8 +37,17 @@ function showHome() {
   els.articleView.classList.add("hidden");
   els.homeView.classList.remove("hidden");
 }
-function showArticle(title, content) {
+function renderMeta(seo) {
+  if (!seo) return "";
+  const time = seo.reading_time_min ? `<span class="read-time">${seo.reading_time_min} min read</span>` : "";
+  const tags = (seo.tags || []).map((t) => `<span class="tag">${t}</span>`).join("");
+  const desc = seo.meta_description ? `<p class="meta-desc">${seo.meta_description}</p>` : "";
+  return `<div class="meta-row">${time}${tags}</div>${desc}`;
+}
+
+function showArticle(title, content, seo) {
   els.articleTitle.textContent = cleanTitle(title);
+  els.articleMeta.innerHTML = renderMeta(seo);
   els.articleBody.innerHTML = window.marked.parse(content || "");
   els.homeView.classList.add("hidden");
   els.articleView.classList.remove("hidden");
@@ -72,7 +82,7 @@ function renderDrafts() {
     const card = document.createElement("div");
     card.className = "draft-card";
     card.innerHTML = `<h3>${d.title}</h3><div class="meta">${d.date}</div>`;
-    card.addEventListener("click", () => showArticle(d.title, d.content));
+    card.addEventListener("click", () => showArticle(d.title, d.content, d.seo));
     els.drafts.appendChild(card);
   });
 }
@@ -90,6 +100,7 @@ async function generate() {
   els.progress.classList.remove("hidden");
   els.progress.innerHTML = '<div class="row">Starting…</div>';
   let blog = {};
+  let seo = null;
 
   const payload = {
     topic,
@@ -123,6 +134,7 @@ async function generate() {
           els.progress.innerHTML += `<div class="row"><span class="tick">✓</span> ${ev.message}</div>`;
         } else if (ev.event === "done") {
           blog = ev.blog || {};
+          seo = ev.seo || null;
         } else if (ev.event === "error") {
           els.progress.innerHTML += `<div class="row">⚠ ${ev.message}</div>`;
         }
@@ -139,12 +151,13 @@ async function generate() {
     const draft = {
       title: cleanTitle(blog.title || topic),
       content: blog.content,
+      seo,
       topic,
       date: new Date().toLocaleString(),
     };
     saveDraft(draft);
     els.progress.classList.add("hidden");
-    showArticle(draft.title, draft.content);
+    showArticle(draft.title, draft.content, draft.seo);
   }
 }
 
