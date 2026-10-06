@@ -66,7 +66,15 @@
 
   <!-- ARTICLE VIEW -->
   <main class="page article-view hidden" id="article-view">
-    <button class="back" id="back">← Back to studio</button>
+    <div class="article-top">
+      <button class="back" id="back">← Back to studio</button>
+      <div class="article-actions">
+        <button class="ghost" id="copy-md">Copy</button>
+        <button class="ghost" id="dl-md">Download .md</button>
+        <button class="ghost" id="dl-html">Download .html</button>
+        <button class="ghost" id="dl-docx">Download .docx</button>
+      </div>
+    </div>
     <h1 class="article-title" id="article-title"></h1>
     <div class="article-meta" id="article-meta"></div>
     <article class="article" id="article-body"></article>

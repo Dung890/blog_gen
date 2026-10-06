@@ -6,12 +6,15 @@ Exposes a single ``POST /blogs`` endpoint. Given a ``topic`` (and optionally a
 
 import json
 import os
+import re
 import time
 import uuid
+from io import BytesIO
 
 import structlog
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from docx import Document
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -75,6 +78,13 @@ class ReadingEvent(BaseModel):
 
     slug: str
     seconds: int
+
+
+class ExportRequest(BaseModel):
+    """Body for POST /export/docx."""
+
+    title: str = ""
+    content: str = ""  # Markdown
 
 
 class BlogResponse(BaseModel):
@@ -202,6 +212,38 @@ async def reading_stats(slug: str):
     except Exception as exc:  # noqa: BLE001
         log.warning("analytics_stats_failed", error=str(exc)[:120])
         return {"slug": slug, "average_seconds": None, "count": 0}
+
+
+@app.post("/export/docx")
+async def export_docx(req: ExportRequest):
+    """Convert a post's Markdown into a downloadable .docx file."""
+    doc = Document()
+    if req.title:
+        doc.add_heading(req.title, level=0)
+    for raw in req.content.splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        # Strip inline Markdown emphasis so it doesn't show as literal * or `.
+        text = re.sub(r"(\*\*|\*|`)", "", line)
+        if line.startswith("### "):
+            doc.add_heading(text[4:], level=3)
+        elif line.startswith("## "):
+            doc.add_heading(text[3:], level=2)
+        elif line.startswith("# "):
+            doc.add_heading(text[2:], level=1)
+        elif line.startswith(("- ", "* ")):
+            doc.add_paragraph(text[2:], style="List Bullet")
+        else:
+            doc.add_paragraph(text)
+
+    buffer = BytesIO()
+    doc.save(buffer)
+    return Response(
+        content=buffer.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": 'attachment; filename="blog.docx"'},
+    )
 
 
 @app.post("/blogs/stream")

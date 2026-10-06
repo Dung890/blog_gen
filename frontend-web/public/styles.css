@@ -152,3 +152,12 @@ body {
 .meta-desc { font-family: var(--ui); font-size: 14px; color: var(--muted); font-style: italic; margin: 0; }
 
 .actual-time { font-family: var(--ui); font-size: 13px; color: var(--muted); }
+
+.article-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.article-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.ghost {
+  background: var(--surface); border: 1px solid var(--border); color: var(--ink);
+  font-family: var(--ui); font-size: 13px; font-weight: 600;
+  padding: 7px 12px; border-radius: 999px; cursor: pointer; transition: border-color 0.15s;
+}
+.ghost:hover { border-color: var(--accent); }

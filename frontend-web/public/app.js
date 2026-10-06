@@ -16,7 +16,15 @@ const els = {
   articleTitle: $("article-title"),
   articleMeta: $("article-meta"),
   articleBody: $("article-body"),
+  copyMd: $("copy-md"),
+  dlMd: $("dl-md"),
+  dlHtml: $("dl-html"),
+  dlDocx: $("dl-docx"),
 };
+
+// The currently-open article (for export).
+let currentContent = "";
+let currentTitle = "";
 
 // Strip stray Markdown symbols (**, #) so titles display cleanly.
 const cleanTitle = (t) => (t || "Untitled").replace(/[*#`]/g, "").trim();
@@ -102,7 +110,9 @@ function showArticle(title, content, seo) {
   currentSlug = (seo && seo.slug) || null;
   tickOff();
   if (!document.hidden) tickOn();
-  els.articleTitle.textContent = cleanTitle(title);
+  currentContent = content || "";
+  currentTitle = cleanTitle(title);
+  els.articleTitle.textContent = currentTitle;
   els.articleMeta.innerHTML = renderMeta(seo);
   showActualReadTime(currentSlug); // append real avg read time if data exists
   els.articleBody.innerHTML = window.marked.parse(content || "");
@@ -221,6 +231,53 @@ async function generate() {
 els.generate.addEventListener("click", generate);
 els.topic.addEventListener("keydown", (e) => {
   if (e.key === "Enter") generate();
+});
+
+// ---- export helpers ----
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function fileBase() {
+  return (currentSlug || currentTitle || "blog").toString().slice(0, 60);
+}
+
+els.copyMd.addEventListener("click", async () => {
+  await navigator.clipboard.writeText(currentContent);
+  els.copyMd.textContent = "Copied!";
+  setTimeout(() => (els.copyMd.textContent = "Copy"), 1500);
+});
+
+els.dlMd.addEventListener("click", () => {
+  downloadBlob(new Blob([currentContent], { type: "text/markdown" }), fileBase() + ".md");
+});
+
+els.dlHtml.addEventListener("click", () => {
+  const body = window.marked.parse(currentContent || "");
+  const html =
+    `<!DOCTYPE html>\n<html lang="en"><head><meta charset="UTF-8">` +
+    `<title>${currentTitle}</title></head><body>\n${body}\n</body></html>`;
+  downloadBlob(new Blob([html], { type: "text/html" }), fileBase() + ".html");
+});
+
+els.dlDocx.addEventListener("click", async () => {
+  els.dlDocx.textContent = "…";
+  try {
+    const r = await fetch(API + "/export/docx", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: currentTitle, content: currentContent }),
+    });
+    downloadBlob(await r.blob(), fileBase() + ".docx");
+  } catch {
+    alert("Could not export .docx (is the backend running?)");
+  } finally {
+    els.dlDocx.textContent = "Download .docx";
+  }
 });
 
 // on load

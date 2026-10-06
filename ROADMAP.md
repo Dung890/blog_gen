@@ -358,7 +358,8 @@ the phase needs them (don't over-engineer an empty app).
 - [x] Redesigned as a "minimal writing studio" (warm white / charcoal / purple, Inter + Lora):
       editorial home screen, home↔article view routing, article canvas, recent drafts via
       localStorage, clean titles. Verified live. *(Phase 3 L2)*
-- [ ] Section editor + export to HTML/`.docx` (Markdown + copy/download done).
+- [x] Export: Copy, download `.md` + `.html` (frontend), and `.docx` via `POST /export/docx`
+      (python-docx, Markdown→Word). Verified live. *(section editor: later)*
 - [x] Tone / length / audience controls: `BlogRequest` fields → `_controls` → graph state →
       content prompt; styled dropdowns in the Writing Studio composer. Verified. *(section
       regeneration: later)*
