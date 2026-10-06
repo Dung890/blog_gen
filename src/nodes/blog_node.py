@@ -108,13 +108,28 @@ class BlogNode:
         return {"memory_notes": notes}
 
     def store_memory(self, state: BlogState) -> dict:
-        """Save this finished post to long-term memory (safe if memory is off)."""
+        """Save this finished post to long-term memory with its SEO metadata.
+
+        Stores the STABLE metadata (slug, tags, estimated reading time). The
+        live average read time is NOT copied here - it changes with every read,
+        so it stays in the analytics table and is joined by `slug` on demand.
+        """
         if self.memory:
             blog = state.get("blog", {})
             title = (blog.get("title") or "").strip()
             if title:
+                metadata: dict[str, object] = {"topic": state["topic"]}
+                seo = state.get("seo")
+                if seo is not None:
+                    metadata.update(
+                        {
+                            "slug": seo.slug,
+                            "tags": seo.tags,
+                            "reading_time_min": seo.reading_time_min,
+                        }
+                    )
                 try:
-                    self.memory.remember(title, kind="episodic", metadata={"topic": state["topic"]})
+                    self.memory.remember(title, kind="episodic", metadata=metadata)
                 except Exception as exc:  # noqa: BLE001
                     log.warning("store_failed", error=str(exc)[:120])
         return {}

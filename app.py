@@ -16,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from src.analytics import get_analytics
 from src.config import get_settings
 from src.config.logging import configure_logging, get_logger
 from src.graphs.graph_builder import GraphBuilder
@@ -67,6 +68,13 @@ class BlogRequest(BaseModel):
     audience: str | None = Field(
         default=None, description="Target audience.", examples=["beginners"]
     )
+
+
+class ReadingEvent(BaseModel):
+    """Body for POST /analytics: a reader's engaged time on a post."""
+
+    slug: str
+    seconds: int
 
 
 class BlogResponse(BaseModel):
@@ -169,6 +177,31 @@ async def create_blogs(payload: BlogRequest):
     finally:
         # Clear the bound id so it doesn't leak into the next request.
         structlog.contextvars.clear_contextvars()
+
+
+@app.post("/analytics")
+async def record_reading(event: ReadingEvent):
+    """Record a reader's engaged time for a post (fire-and-forget)."""
+    store = get_analytics()
+    if store:
+        try:
+            store.record(event.slug, max(0, event.seconds))
+        except Exception as exc:  # noqa: BLE001
+            log.warning("analytics_record_failed", error=str(exc)[:120])
+    return {"ok": True}
+
+
+@app.get("/analytics/{slug}")
+async def reading_stats(slug: str):
+    """Return the average actual read time + number of reads for a post."""
+    store = get_analytics()
+    if not store:
+        return {"slug": slug, "average_seconds": None, "count": 0}
+    try:
+        return {"slug": slug, **store.stats(slug)}
+    except Exception as exc:  # noqa: BLE001
+        log.warning("analytics_stats_failed", error=str(exc)[:120])
+        return {"slug": slug, "average_seconds": None, "count": 0}
 
 
 @app.post("/blogs/stream")

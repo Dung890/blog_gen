@@ -365,6 +365,13 @@ the phase needs them (don't over-engineer an empty app).
 - [x] SEO pack: `seo_pack` node (meta description, slug, tags via LLM; reading time computed
       from word count) → exposed in API `done` event + `/blogs` response → rendered on the
       article page (reading time + tag pills + meta description). Verified live. *(cover-image prompt: later)*
+- [x] Reader analytics (silent): frontend measures engaged time (Page Visibility-aware, no UI),
+      POSTs to `/analytics` on leave (`keepalive`); `src/analytics.py` stores per-slug reads in
+      Postgres + computes averages. Verified live (real slug + seconds recorded).
+- [x] Actual avg read time shown alongside the SEO estimate: `GET /analytics/{slug}` →
+      article page appends "· avg Xm Ys actual (N reads)" when read data exists. Verified live.
+- [x] Episodic memory records enriched with post metadata (slug, tags, reading_time_min) at
+      store time; live read time stays in analytics, joined by `slug` (single source of truth).
 - [ ] Run history; optional human-in-the-loop approval after outline (`interrupt()`).
 - [ ] Auth + rate limiting + API keys if multi-tenant.
 - **Deliverable:** a polished app fit for users or a recruiter.

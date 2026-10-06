@@ -150,3 +150,5 @@ body {
   color: var(--accent); padding: 3px 10px; border-radius: 999px;
 }
 .meta-desc { font-family: var(--ui); font-size: 14px; color: var(--muted); font-style: italic; margin: 0; }
+
+.actual-time { font-family: var(--ui); font-size: 13px; color: var(--muted); }

@@ -21,6 +21,37 @@ const els = {
 // Strip stray Markdown symbols (**, #) so titles display cleanly.
 const cleanTitle = (t) => (t || "Untitled").replace(/[*#`]/g, "").trim();
 
+// ---- reader analytics: measure engaged time silently (no UI) ----
+let readSeconds = 0;
+let readTimer = null;
+let currentSlug = null;
+
+function tickOn() {
+  if (!readTimer) readTimer = setInterval(() => readSeconds++, 1000);
+}
+function tickOff() {
+  clearInterval(readTimer);
+  readTimer = null;
+}
+function flushReading() {
+  if (currentSlug && readSeconds > 0) {
+    try {
+      fetch(API + "/analytics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: currentSlug, seconds: readSeconds }),
+        keepalive: true, // lets it complete even if the page is closing
+      });
+    } catch {}
+  }
+  readSeconds = 0;
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) tickOff();
+  else if (!els.articleView.classList.contains("hidden")) tickOn();
+});
+window.addEventListener("pagehide", flushReading);
+
 let mode = "fast";
 
 // ---- mode toggle ----
@@ -34,6 +65,8 @@ document.querySelectorAll(".seg").forEach((btn) => {
 
 // ---- switching between the home view and the article view ----
 function showHome() {
+  flushReading();
+  tickOff();
   els.articleView.classList.add("hidden");
   els.homeView.classList.remove("hidden");
 }
@@ -45,9 +78,33 @@ function renderMeta(seo) {
   return `<div class="meta-row">${time}${tags}</div>${desc}`;
 }
 
+async function showActualReadTime(slug) {
+  if (!slug) return;
+  try {
+    const r = await fetch(`${API}/analytics/${encodeURIComponent(slug)}`);
+    const s = await r.json();
+    if (s.count > 0 && s.average_seconds) {
+      const m = Math.floor(s.average_seconds / 60);
+      const sec = Math.round(s.average_seconds % 60);
+      const row = els.articleMeta.querySelector(".meta-row");
+      if (row) {
+        const span = document.createElement("span");
+        span.className = "actual-time";
+        span.textContent = `· avg ${m}m ${sec}s actual (${s.count} ${s.count === 1 ? "read" : "reads"})`;
+        row.appendChild(span);
+      }
+    }
+  } catch {}
+}
+
 function showArticle(title, content, seo) {
+  flushReading(); // save any time from a previously open article
+  currentSlug = (seo && seo.slug) || null;
+  tickOff();
+  if (!document.hidden) tickOn();
   els.articleTitle.textContent = cleanTitle(title);
   els.articleMeta.innerHTML = renderMeta(seo);
+  showActualReadTime(currentSlug); // append real avg read time if data exists
   els.articleBody.innerHTML = window.marked.parse(content || "");
   els.homeView.classList.add("hidden");
   els.articleView.classList.remove("hidden");
